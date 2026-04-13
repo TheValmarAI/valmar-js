@@ -99,32 +99,6 @@ export interface MemberImportBulkResult {
 }
 
 // ---------------------------------------------------------------------------
-// Webhooks API
-// ---------------------------------------------------------------------------
-
-export interface WebhookCreateParams {
-  projectId: string;
-  url: string;
-  events: string[];
-}
-
-export interface WebhookListParams {
-  projectId: string;
-}
-
-export interface WebhookDeleteParams {
-  endpointId: string;
-}
-
-export interface WebhookEndpoint {
-  id: string;
-  url: string;
-  events: string[];
-  active: boolean;
-  secret: string;
-}
-
-// ---------------------------------------------------------------------------
 // Usage / Stats
 // ---------------------------------------------------------------------------
 
@@ -134,7 +108,6 @@ export interface ProjectUsageStats {
   contextRequestsCompleted: number;
   contextRequestsFailed: number;
   membersTotal: number;
-  webhooksTotal: number;
 }
 
 // ---------------------------------------------------------------------------

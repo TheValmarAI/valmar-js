@@ -14,9 +14,5 @@ export type {
   MemberImportBulkParams,
   MemberImportBulkResult,
   MemberImportEntry,
-  WebhookCreateParams,
-  WebhookListParams,
-  WebhookDeleteParams,
-  WebhookEndpoint,
   ProjectUsageStats,
 } from "./types.js";

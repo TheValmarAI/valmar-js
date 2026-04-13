@@ -51,26 +51,6 @@ if (request.status === "completed") {
 }
 ```
 
-### Manage webhooks
-
-Subscribe to events like context request completions.
-
-```typescript
-// Create a webhook endpoint
-const endpoint = await valmar.webhooks.create({
-  projectId: "your-project-id",
-  url: "https://example.com/webhooks/valmar",
-  events: ["context_request.completed"],
-});
-
-console.log(`Webhook secret: ${endpoint.secret}`);
-
-// List all endpoints
-const endpoints = await valmar.webhooks.list({
-  projectId: "your-project-id",
-});
-```
-
 ### List members
 
 ```typescript

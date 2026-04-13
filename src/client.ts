@@ -10,10 +10,6 @@ import type {
   Member,
   MemberImportBulkParams,
   MemberImportBulkResult,
-  WebhookCreateParams,
-  WebhookListParams,
-  WebhookDeleteParams,
-  WebhookEndpoint,
   JsonObject,
   JsonValue,
 } from "./types.js";
@@ -121,32 +117,6 @@ class MembersResource {
   }
 }
 
-class WebhooksResource {
-  constructor(private request: RequestFn) {}
-
-  async create(params: WebhookCreateParams): Promise<WebhookEndpoint> {
-    return this.request<WebhookEndpoint>(
-      "POST",
-      `/api/projects/${params.projectId}/webhooks`,
-      { url: params.url, events: params.events },
-    );
-  }
-
-  async list(params: WebhookListParams): Promise<WebhookEndpoint[]> {
-    return this.request<WebhookEndpoint[]>(
-      "GET",
-      `/api/projects/${params.projectId}/webhooks`,
-    );
-  }
-
-  async delete(params: WebhookDeleteParams): Promise<void> {
-    await this.request<void>(
-      "DELETE",
-      `/api/webhooks/${params.endpointId}`,
-    );
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Internal types
 // ---------------------------------------------------------------------------
@@ -154,7 +124,7 @@ class WebhooksResource {
 type RequestFn = <T>(
   method: string,
   path: string,
-  body?: Record<string, unknown>,
+  body?: object,
 ) => Promise<T>;
 
 // ---------------------------------------------------------------------------
@@ -170,7 +140,6 @@ export class Valmar {
   public readonly context: ContextResource;
   public readonly knowledge: KnowledgeResource;
   public readonly members: MembersResource;
-  public readonly webhooks: WebhooksResource;
 
   constructor(config: ValmarConfig) {
     this.apiKey = config.apiKey;
@@ -180,7 +149,6 @@ export class Valmar {
     this.context = new ContextResource(boundRequest);
     this.knowledge = new KnowledgeResource(boundRequest);
     this.members = new MembersResource(boundRequest);
-    this.webhooks = new WebhooksResource(boundRequest);
   }
 
   // -------------------------------------------------------------------------
@@ -190,7 +158,7 @@ export class Valmar {
   private async request<T>(
     method: string,
     path: string,
-    body?: Record<string, unknown>,
+    body?: object,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
 
