@@ -1,22 +1,20 @@
 import type {
   ValmarConfig,
-  ContextGatherParams,
-  ContextRequestHandle,
-  ContextRequest,
-  ContextSearchParams,
-  ContextSearchResult,
-  KnowledgeSearchParams,
-  KnowledgeSearchResult,
-  Member,
-  MemberImportBulkParams,
-  MemberImportBulkResult,
+  ImportPeopleParams,
+  ImportPeopleResult,
   JsonObject,
   JsonValue,
+  KnowledgeItem,
+  KnowledgeItemProvenance,
+  KnowledgeRequest,
+  KnowledgeRequestAnswer,
+  KnowledgeRequestCreateParams,
+  KnowledgeRequestHandle,
+  KnowledgeRequestListItem,
+  KnowledgeSearchParams,
+  KnowledgeSearchResult,
+  Person,
 } from "./types.js";
-
-// ---------------------------------------------------------------------------
-// Case-conversion helpers
-// ---------------------------------------------------------------------------
 
 function camelToSnake(str: string): string {
   return str.replace(/[A-Z]/g, (ch) => `_${ch.toLowerCase()}`);
@@ -51,10 +49,6 @@ function toCamelCase<T>(obj: JsonValue): T {
   return convertKeys(obj, snakeToCamel) as T;
 }
 
-// ---------------------------------------------------------------------------
-// API error
-// ---------------------------------------------------------------------------
-
 export class ValmarApiError extends Error {
   constructor(
     public readonly status: number,
@@ -66,39 +60,102 @@ export class ValmarApiError extends Error {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Resource namespaces
-// ---------------------------------------------------------------------------
+interface BackendKnowledgeItemProvenance {
+  sourceThreadId?: string | null;
+  sourceMemberId?: string | null;
+  sourceAgentRunId?: string | null;
+  sourceContextRequestId?: string | null;
+  sourceMessageId?: string | null;
+}
 
-class ContextResource {
-  constructor(
-    private request: RequestFn,
-    private organizationId: string,
-    private projectId: string,
-  ) {}
+interface BackendKnowledgeItem {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  organizationId: string;
+  projectId: string;
+  contextRequestId?: string | null;
+  type: KnowledgeItem["type"];
+  title: string;
+  contentMd: string;
+  provenance?: BackendKnowledgeItemProvenance;
+  confidence: number;
+  reviewStatus: KnowledgeItem["reviewStatus"];
+  relatedMemberIds?: string[];
+  relatedTwinNodeIds?: string[];
+  tags?: string[];
+}
 
-  async gather(params: ContextGatherParams): Promise<ContextRequestHandle> {
-    return this.request<ContextRequestHandle>("POST", "/api/context/requests", {
-      ...params,
-      projectId: this.projectId,
-      requestingApplication: params.requestingApplication ?? "valmar-sdk-ts",
-    });
+interface BackendKnowledgeSearchResult {
+  items: BackendKnowledgeItem[];
+  totalCount: number;
+}
+
+interface BackendKnowledgeRequestHandle {
+  contextRequestId: string;
+  status: KnowledgeRequestHandle["status"];
+  resourceUri: string;
+}
+
+interface BackendKnowledgeRequestAnswer {
+  status: KnowledgeRequestAnswer["status"];
+  answerText: string;
+  answerContextParts?: string[];
+}
+
+interface BackendKnowledgeRequest extends Omit<KnowledgeRequest, "answer"> {
+  answer: BackendKnowledgeRequestAnswer | null;
+}
+
+type RequestFn = <T>(
+  method: string,
+  path: string,
+  body?: object,
+) => Promise<T>;
+
+function mapKnowledgeItemProvenance(
+  provenance: BackendKnowledgeItemProvenance = {},
+): KnowledgeItemProvenance {
+  return {
+    sourceThreadId: provenance.sourceThreadId ?? null,
+    sourceMemberId: provenance.sourceMemberId ?? null,
+    sourceAgentRunId: provenance.sourceAgentRunId ?? null,
+    sourceKnowledgeRequestId: provenance.sourceContextRequestId ?? null,
+    sourceMessageId: provenance.sourceMessageId ?? null,
+  };
+}
+
+function mapKnowledgeItem(item: BackendKnowledgeItem): KnowledgeItem {
+  return {
+    id: item.id,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    organizationId: item.organizationId,
+    projectId: item.projectId,
+    knowledgeRequestId: item.contextRequestId ?? null,
+    type: item.type,
+    title: item.title,
+    contentMd: item.contentMd,
+    provenance: mapKnowledgeItemProvenance(item.provenance),
+    confidence: item.confidence,
+    reviewStatus: item.reviewStatus,
+    relatedMemberIds: item.relatedMemberIds ?? [],
+    relatedTwinNodeIds: item.relatedTwinNodeIds ?? [],
+    tags: item.tags ?? [],
+  };
+}
+
+function mapKnowledgeRequestAnswer(
+  answer: BackendKnowledgeRequestAnswer | null,
+): KnowledgeRequestAnswer | null {
+  if (answer === null) {
+    return null;
   }
-
-  async get(contextRequestId: string): Promise<ContextRequest> {
-    return this.request<ContextRequest>(
-      "GET",
-      `/api/context/requests/${contextRequestId}`,
-    );
-  }
-
-  async search(params: ContextSearchParams): Promise<ContextSearchResult> {
-    return this.request<ContextSearchResult>("POST", "/api/context/search", {
-      organizationId: this.organizationId,
-      projectId: this.projectId,
-      ...params,
-    });
-  }
+  return {
+    status: answer.status,
+    answerText: answer.answerText,
+    answerKnowledgeItems: answer.answerContextParts ?? [],
+  };
 }
 
 class KnowledgeResource {
@@ -108,48 +165,88 @@ class KnowledgeResource {
     private projectId: string,
   ) {}
 
-  async search(params: KnowledgeSearchParams): Promise<KnowledgeSearchResult> {
-    return this.request<KnowledgeSearchResult>(
+  async search(params: KnowledgeSearchParams = {}): Promise<KnowledgeSearchResult> {
+    const result = await this.request<BackendKnowledgeSearchResult>(
       "POST",
       "/api/context/search",
       {
         organizationId: this.organizationId,
         projectId: this.projectId,
-        ...params,
+        query: params.query ?? "",
+        limit: params.limit,
+        types: params.types ?? [],
+        relatedMemberIds: params.relatedMemberIds ?? [],
       },
     );
+
+    return {
+      items: result.items.map(mapKnowledgeItem),
+      totalCount: result.totalCount,
+    };
   }
 }
 
-class MembersResource {
-  constructor(private request: RequestFn) {}
+class KnowledgeRequestsResource {
+  constructor(
+    private request: RequestFn,
+    private projectId: string,
+  ) {}
 
-  async list(organizationId: string): Promise<Member[]> {
-    return this.request<Member[]>("GET", `/api/organizations/${organizationId}/members`);
+  async create(params: KnowledgeRequestCreateParams): Promise<KnowledgeRequestHandle> {
+    const handle = await this.request<BackendKnowledgeRequestHandle>(
+      "POST",
+      "/api/context/requests",
+      {
+        ...params,
+        projectId: this.projectId,
+        requestingApplication: params.requestingApplication ?? "valmar-sdk-ts",
+      },
+    );
+
+    return {
+      knowledgeRequestId: handle.contextRequestId,
+      status: handle.status,
+      resourceUri: handle.resourceUri,
+    };
   }
 
-  async importBulk(organizationId: string, params: MemberImportBulkParams): Promise<MemberImportBulkResult> {
-    return this.request<MemberImportBulkResult>(
-      "POST",
-      `/api/organizations/${organizationId}/members/import`,
-      params,
+  async get(knowledgeRequestId: string): Promise<KnowledgeRequest> {
+    const request = await this.request<BackendKnowledgeRequest>(
+      "GET",
+      `/api/context/requests/${knowledgeRequestId}`,
+    );
+    return {
+      ...request,
+      answer: mapKnowledgeRequestAnswer(request.answer),
+    };
+  }
+
+  async list(): Promise<KnowledgeRequestListItem[]> {
+    return this.request<KnowledgeRequestListItem[]>(
+      "GET",
+      `/api/projects/${this.projectId}/context-requests`,
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Internal types
-// ---------------------------------------------------------------------------
+class PeopleResource {
+  constructor(
+    private request: RequestFn,
+    private organizationId: string,
+  ) {}
 
-type RequestFn = <T>(
-  method: string,
-  path: string,
-  body?: object,
-) => Promise<T>;
+  async list(): Promise<Person[]> {
+    return this.request<Person[]>("GET", `/api/organizations/${this.organizationId}/members`);
+  }
 
-// ---------------------------------------------------------------------------
-// Valmar client
-// ---------------------------------------------------------------------------
+  async importBulk(params: ImportPeopleParams): Promise<ImportPeopleResult> {
+    return this.request<ImportPeopleResult>(
+      "POST",
+      `/api/organizations/${this.organizationId}/members/import`,
+      { members: params.people },
+    );
+  }
+}
 
 const DEFAULT_BASE_URL = "https://api.valmar.dev";
 
@@ -159,9 +256,9 @@ export class Valmar {
   private readonly organizationId: string;
   private readonly projectId: string;
 
-  public readonly context: ContextResource;
   public readonly knowledge: KnowledgeResource;
-  public readonly members: MembersResource;
+  public readonly knowledgeRequests: KnowledgeRequestsResource;
+  public readonly people: PeopleResource;
 
   constructor(config: ValmarConfig) {
     this.apiKey = config.apiKey;
@@ -170,14 +267,10 @@ export class Valmar {
     this.projectId = config.projectId;
 
     const boundRequest = this.request.bind(this);
-    this.context = new ContextResource(boundRequest, this.organizationId, this.projectId);
     this.knowledge = new KnowledgeResource(boundRequest, this.organizationId, this.projectId);
-    this.members = new MembersResource(boundRequest);
+    this.knowledgeRequests = new KnowledgeRequestsResource(boundRequest, this.projectId);
+    this.people = new PeopleResource(boundRequest, this.organizationId);
   }
-
-  // -------------------------------------------------------------------------
-  // Core HTTP helper
-  // -------------------------------------------------------------------------
 
   private async request<T>(
     method: string,
@@ -185,32 +278,29 @@ export class Valmar {
     body?: object,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     };
-
     const init: RequestInit = { method, headers };
 
     if (body !== undefined) {
       init.body = JSON.stringify(toSnakeCase(body as JsonObject));
     }
 
-    const res = await fetch(url, init);
+    const response = await fetch(url, init);
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ValmarApiError(res.status, res.statusText, text);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new ValmarApiError(response.status, response.statusText, text);
     }
 
-    // DELETE endpoints may return 204 No Content
-    if (res.status === 204) {
+    if (response.status === 204) {
       return undefined as T;
     }
 
-    const json: JsonValue = await res.json() as JsonValue;
+    const json = (await response.json()) as JsonValue;
     return toCamelCase<T>(json);
   }
 }

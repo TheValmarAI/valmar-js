@@ -5,12 +5,12 @@ TypeScript SDK for the Valmar platform.
 ## Installation
 
 ```bash
-npm install @valmar/sdk
+bun add @valmar/sdk
 ```
 
 ## Quick start
 
-```typescript
+```ts
 import { Valmar } from "@valmar/sdk";
 
 const valmar = new Valmar({
@@ -21,14 +21,12 @@ const valmar = new Valmar({
 });
 ```
 
-## Examples
+## Search knowledge
 
-### Search context
+Find relevant saved knowledge across the configured project.
 
-Find relevant context across the configured project's knowledge base.
-
-```typescript
-const results = await valmar.context.search({ query: "deployment process" });
+```ts
+const results = await valmar.knowledge.search({ query: "deployment process" });
 
 for (const item of results.items) {
   console.log(`${item.title} (${item.confidence})`);
@@ -36,43 +34,49 @@ for (const item of results.items) {
 }
 ```
 
-### Gather context
+## Create a knowledge request
 
-Create a context request that gets routed to the right people in your org.
+Create a knowledge request that gets routed to the right people in your organization.
 
-```typescript
-const handle = await valmar.context.gather({
+```ts
+const handle = await valmar.knowledgeRequests.create({
   question: "How do we handle database migrations in production?",
   backgroundContext: "Planning a schema change for the orders table",
 });
 
-console.log(`Request created: ${handle.contextRequestId}`);
+console.log(`Request created: ${handle.knowledgeRequestId}`);
 console.log(`Status: ${handle.status}`);
 
-// Poll for the result later
-const request = await valmar.context.get(handle.contextRequestId);
+const request = await valmar.knowledgeRequests.get(handle.knowledgeRequestId);
 if (request.status === "completed") {
   console.log(request.resultSummary);
 }
 ```
 
-### List members
+## List and import people
 
-```typescript
-const members = await valmar.members.list("your-organization-id");
+```ts
+const people = await valmar.people.list();
 
-for (const member of members) {
-  console.log(`${member.displayName} <${member.email}>`);
-}
+const result = await valmar.people.importBulk({
+  people: [
+    {
+      email: "ada@example.com",
+      displayName: "Ada Lovelace",
+      timezone: "UTC",
+      title: "Principal Engineer",
+    },
+  ],
+});
 ```
 
 ## Error handling
 
-```typescript
+```ts
 import { Valmar, ValmarApiError } from "@valmar/sdk";
 
 try {
-  await valmar.context.search({ query: "test" });
+  await valmar.knowledge.search({ query: "test" });
 } catch (err) {
   if (err instanceof ValmarApiError) {
     console.error(`API error ${err.status}: ${err.body}`);
