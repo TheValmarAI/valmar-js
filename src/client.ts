@@ -64,7 +64,7 @@ interface BackendKnowledgeItemProvenance {
   sourceThreadId?: string | null;
   sourceMemberId?: string | null;
   sourceAgentRunId?: string | null;
-  sourceContextRequestId?: string | null;
+  sourceKnowledgeRequestId?: string | null;
   sourceMessageId?: string | null;
 }
 
@@ -74,7 +74,7 @@ interface BackendKnowledgeItem {
   updatedAt: string;
   organizationId: string;
   projectId: string;
-  contextRequestId?: string | null;
+  knowledgeRequestId?: string | null;
   type: KnowledgeItem["type"];
   title: string;
   contentMd: string;
@@ -92,7 +92,7 @@ interface BackendKnowledgeSearchResult {
 }
 
 interface BackendKnowledgeRequestHandle {
-  contextRequestId: string;
+  knowledgeRequestId: string;
   status: KnowledgeRequestHandle["status"];
   resourceUri: string;
   message: string;
@@ -101,7 +101,7 @@ interface BackendKnowledgeRequestHandle {
 interface BackendKnowledgeRequestAnswer {
   status: KnowledgeRequestAnswer["status"];
   answerText: string;
-  answerContextParts?: string[];
+  answerKnowledgeItems?: string[];
 }
 
 interface BackendKnowledgeRequest extends Omit<KnowledgeRequest, "answer"> {
@@ -121,7 +121,7 @@ function mapKnowledgeItemProvenance(
     sourceThreadId: provenance.sourceThreadId ?? null,
     sourceMemberId: provenance.sourceMemberId ?? null,
     sourceAgentRunId: provenance.sourceAgentRunId ?? null,
-    sourceKnowledgeRequestId: provenance.sourceContextRequestId ?? null,
+    sourceKnowledgeRequestId: provenance.sourceKnowledgeRequestId ?? null,
     sourceMessageId: provenance.sourceMessageId ?? null,
   };
 }
@@ -133,7 +133,7 @@ function mapKnowledgeItem(item: BackendKnowledgeItem): KnowledgeItem {
     updatedAt: item.updatedAt,
     organizationId: item.organizationId,
     projectId: item.projectId,
-    knowledgeRequestId: item.contextRequestId ?? null,
+    knowledgeRequestId: item.knowledgeRequestId ?? null,
     type: item.type,
     title: item.title,
     contentMd: item.contentMd,
@@ -155,7 +155,7 @@ function mapKnowledgeRequestAnswer(
   return {
     status: answer.status,
     answerText: answer.answerText,
-    answerKnowledgeItems: answer.answerContextParts ?? [],
+    answerKnowledgeItems: answer.answerKnowledgeItems ?? [],
   };
 }
 
@@ -169,7 +169,7 @@ class KnowledgeResource {
   async search(params: KnowledgeSearchParams = {}): Promise<KnowledgeSearchResult> {
     const result = await this.request<BackendKnowledgeSearchResult>(
       "POST",
-      "/api/context/search",
+      "/api/knowledge/search",
       {
         organizationId: this.organizationId,
         projectId: this.projectId,
@@ -196,7 +196,7 @@ class KnowledgeRequestsResource {
   async create(params: KnowledgeRequestCreateParams): Promise<KnowledgeRequestHandle> {
     const handle = await this.request<BackendKnowledgeRequestHandle>(
       "POST",
-      "/api/context/requests",
+      "/api/knowledge/requests",
       {
         ...params,
         projectId: this.projectId,
@@ -205,7 +205,7 @@ class KnowledgeRequestsResource {
     );
 
     return {
-      knowledgeRequestId: handle.contextRequestId,
+      knowledgeRequestId: handle.knowledgeRequestId,
       status: handle.status,
       resourceUri: handle.resourceUri,
       message: handle.message,
@@ -215,7 +215,7 @@ class KnowledgeRequestsResource {
   async get(knowledgeRequestId: string): Promise<KnowledgeRequest> {
     const request = await this.request<BackendKnowledgeRequest>(
       "GET",
-      `/api/context/requests/${knowledgeRequestId}`,
+      `/api/knowledge/requests/${knowledgeRequestId}`,
     );
     return {
       ...request,
@@ -226,7 +226,7 @@ class KnowledgeRequestsResource {
   async list(): Promise<KnowledgeRequestListItem[]> {
     return this.request<KnowledgeRequestListItem[]>(
       "GET",
-      `/api/projects/${this.projectId}/context-requests`,
+      `/api/projects/${this.projectId}/knowledge-requests`,
     );
   }
 }
@@ -238,14 +238,14 @@ class PeopleResource {
   ) {}
 
   async list(): Promise<Person[]> {
-    return this.request<Person[]>("GET", `/api/organizations/${this.organizationId}/members`);
+    return this.request<Person[]>("GET", `/api/organizations/${this.organizationId}/people`);
   }
 
   async importBulk(params: ImportPeopleParams): Promise<ImportPeopleResult> {
     return this.request<ImportPeopleResult>(
       "POST",
-      `/api/organizations/${this.organizationId}/members/import`,
-      { members: params.people },
+      `/api/organizations/${this.organizationId}/people/import`,
+      { people: params.people },
     );
   }
 }

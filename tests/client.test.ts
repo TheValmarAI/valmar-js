@@ -35,12 +35,12 @@ describe("Valmar", () => {
             updated_at: "2026-01-01T00:00:00Z",
             organization_id: organizationId,
             project_id: projectId,
-            context_request_id: knowledgeRequestId,
+            knowledge_request_id: knowledgeRequestId,
             type: "text",
             title: "Deployment process",
             content_md: "Use the release checklist.",
             provenance: {
-              source_context_request_id: knowledgeRequestId,
+              source_knowledge_request_id: knowledgeRequestId,
             },
             confidence: 0.8,
             review_status: "auto_accepted",
@@ -84,7 +84,7 @@ describe("Valmar", () => {
           requesting_application: "test-agent",
         });
         return Response.json({
-          context_request_id: knowledgeRequestId,
+          knowledge_request_id: knowledgeRequestId,
           status: "pending",
           resource_uri: `valmar://knowledge-requests/${knowledgeRequestId}`,
           message: "Request submitted.",
@@ -109,7 +109,7 @@ describe("Valmar", () => {
         answer: {
           status: "resolved",
           answer_text: "Use the checklist.",
-          answer_context_parts: [knowledgeItemId],
+          answer_knowledge_items: [knowledgeItemId],
         },
         resolved_thread_id: null,
         created_by_actor_id: "machine:test",
@@ -126,8 +126,8 @@ describe("Valmar", () => {
     expect(handle.knowledgeRequestId).toBe(knowledgeRequestId);
     expect(request.answer?.answerKnowledgeItems).toEqual([knowledgeItemId]);
     expect(paths).toEqual([
-      "/api/context/requests",
-      `/api/context/requests/${knowledgeRequestId}`,
+      "/api/knowledge/requests",
+      `/api/knowledge/requests/${knowledgeRequestId}`,
     ]);
   });
 
@@ -140,7 +140,7 @@ describe("Valmar", () => {
 
       if (init?.method === "POST") {
         expect(JSON.parse(String(init.body))).toEqual({
-          members: [{ email: "ada@example.com", display_name: "Ada Lovelace" }],
+          people: [{ email: "ada@example.com", display_name: "Ada Lovelace" }],
         });
         return Response.json({
           created: [
@@ -180,8 +180,8 @@ describe("Valmar", () => {
     expect(people[0]?.displayName).toBe("Ada Lovelace");
     expect(result.created[0]?.memberId).toBe("55555555-5555-4555-8555-555555555555");
     expect(paths).toEqual([
-      `/api/organizations/${organizationId}/members`,
-      `/api/organizations/${organizationId}/members/import`,
+      `/api/organizations/${organizationId}/people`,
+      `/api/organizations/${organizationId}/people/import`,
     ]);
   });
 

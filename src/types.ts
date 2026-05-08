@@ -151,10 +151,10 @@ export interface ImportPeopleResult {
 }
 
 export interface ProjectUsageStats {
-  contextRequestsTotal: number;
-  contextRequestsPending: number;
-  contextRequestsCompleted: number;
-  contextPartsTotal: number;
+  knowledgeRequestsTotal: number;
+  knowledgeRequestsPending: number;
+  knowledgeRequestsCompleted: number;
+  knowledgeItemsTotal: number;
   membersTotal: number;
 }
 
