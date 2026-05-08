@@ -72,6 +72,7 @@ export interface KnowledgeRequestHandle {
   knowledgeRequestId: string;
   status: KnowledgeRequestStatus;
   resourceUri: string;
+  message: string;
 }
 
 export interface KnowledgeRequestAnswer {

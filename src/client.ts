@@ -95,6 +95,7 @@ interface BackendKnowledgeRequestHandle {
   contextRequestId: string;
   status: KnowledgeRequestHandle["status"];
   resourceUri: string;
+  message: string;
 }
 
 interface BackendKnowledgeRequestAnswer {
@@ -207,6 +208,7 @@ class KnowledgeRequestsResource {
       knowledgeRequestId: handle.contextRequestId,
       status: handle.status,
       resourceUri: handle.resourceUri,
+      message: handle.message,
     };
   }
 

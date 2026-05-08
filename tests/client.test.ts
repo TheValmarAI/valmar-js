@@ -87,6 +87,7 @@ describe("Valmar", () => {
           context_request_id: knowledgeRequestId,
           status: "pending",
           resource_uri: `valmar://knowledge-requests/${knowledgeRequestId}`,
+          message: "Request submitted.",
         });
       }
 
