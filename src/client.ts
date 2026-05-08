@@ -71,10 +71,18 @@ export class ValmarApiError extends Error {
 // ---------------------------------------------------------------------------
 
 class ContextResource {
-  constructor(private request: RequestFn) {}
+  constructor(
+    private request: RequestFn,
+    private organizationId: string,
+    private projectId: string,
+  ) {}
 
   async gather(params: ContextGatherParams): Promise<ContextRequestHandle> {
-    return this.request<ContextRequestHandle>("POST", "/api/context/requests", params);
+    return this.request<ContextRequestHandle>("POST", "/api/context/requests", {
+      ...params,
+      projectId: this.projectId,
+      requestingApplication: params.requestingApplication ?? "valmar-sdk-ts",
+    });
   }
 
   async get(contextRequestId: string): Promise<ContextRequest> {
@@ -85,18 +93,30 @@ class ContextResource {
   }
 
   async search(params: ContextSearchParams): Promise<ContextSearchResult> {
-    return this.request<ContextSearchResult>("POST", "/api/context/search", params);
+    return this.request<ContextSearchResult>("POST", "/api/context/search", {
+      organizationId: this.organizationId,
+      projectId: this.projectId,
+      ...params,
+    });
   }
 }
 
 class KnowledgeResource {
-  constructor(private request: RequestFn) {}
+  constructor(
+    private request: RequestFn,
+    private organizationId: string,
+    private projectId: string,
+  ) {}
 
   async search(params: KnowledgeSearchParams): Promise<KnowledgeSearchResult> {
     return this.request<KnowledgeSearchResult>(
       "POST",
       "/api/context/search",
-      params,
+      {
+        organizationId: this.organizationId,
+        projectId: this.projectId,
+        ...params,
+      },
     );
   }
 }
@@ -136,6 +156,8 @@ const DEFAULT_BASE_URL = "https://api.valmar.dev";
 export class Valmar {
   private readonly apiKey: string;
   private readonly baseUrl: string;
+  private readonly organizationId: string;
+  private readonly projectId: string;
 
   public readonly context: ContextResource;
   public readonly knowledge: KnowledgeResource;
@@ -144,10 +166,12 @@ export class Valmar {
   constructor(config: ValmarConfig) {
     this.apiKey = config.apiKey;
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+    this.organizationId = config.organizationId;
+    this.projectId = config.projectId;
 
     const boundRequest = this.request.bind(this);
-    this.context = new ContextResource(boundRequest);
-    this.knowledge = new KnowledgeResource(boundRequest);
+    this.context = new ContextResource(boundRequest, this.organizationId, this.projectId);
+    this.knowledge = new KnowledgeResource(boundRequest, this.organizationId, this.projectId);
     this.members = new MembersResource(boundRequest);
   }
 

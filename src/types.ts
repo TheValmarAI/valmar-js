@@ -4,6 +4,8 @@
 
 export interface ValmarConfig {
   apiKey: string;
+  organizationId: string;
+  projectId: string;
   baseUrl?: string;
 }
 
@@ -15,6 +17,7 @@ export interface ContextGatherParams {
   question: string;
   alreadyTried?: string;
   backgroundContext?: string;
+  requestingApplication?: string;
 }
 
 export interface ContextRequestHandle {

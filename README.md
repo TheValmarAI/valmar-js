@@ -13,14 +13,19 @@ npm install @valmar/sdk
 ```typescript
 import { Valmar } from "@valmar/sdk";
 
-const valmar = new Valmar({ apiKey: "valmr_proj_sk_..." });
+const valmar = new Valmar({
+  apiKey: "valmr_proj_sk_...",
+  organizationId: "your-org-id",
+  projectId: "your-project-id",
+  baseUrl: "https://api.valmar.dev",
+});
 ```
 
 ## Examples
 
 ### Search context
 
-Find relevant context across your organization's knowledge base.
+Find relevant context across the configured project's knowledge base.
 
 ```typescript
 const results = await valmar.context.search({ query: "deployment process" });
