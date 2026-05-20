@@ -2,10 +2,29 @@
   "name": "@valmar/sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for the Valmar platform",
+  "license": "Apache-2.0",
+  "author": "Valmar",
+  "homepage": "https://docs.getvalmar.com",
+  "keywords": [
+    "valmar",
+    "sdk",
+    "agents",
+    "enterprise-context",
+    "knowledge"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheValmarAI/valmar-js.git"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "test": "bun test",

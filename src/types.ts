@@ -2,7 +2,7 @@ export interface ValmarConfig {
   apiKey: string;
   organizationId: string;
   projectId: string;
-  baseUrl?: string;
+  baseUrl: string;
 }
 
 export type KnowledgeRequestStatus =

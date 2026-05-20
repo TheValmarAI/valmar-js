@@ -2,6 +2,12 @@
 
 TypeScript SDK for the Valmar platform.
 
+Documentation: https://docs.getvalmar.com
+
+Source: https://github.com/TheValmarAI/valmar-js
+
+License: Apache-2.0
+
 ## Installation
 
 ```bash
@@ -17,9 +23,11 @@ const valmar = new Valmar({
   apiKey: "valmr_proj_sk_...",
   organizationId: "your-org-id",
   projectId: "your-project-id",
-  baseUrl: "https://api.valmar.dev",
+  baseUrl: "https://your-valmar-deployment.example.com",
 });
 ```
+
+`baseUrl` is required because Valmar is deployed per customer. Use the base URL for your own Valmar deployment.
 
 ## Search knowledge
 

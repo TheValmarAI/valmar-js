@@ -250,8 +250,6 @@ class PeopleResource {
   }
 }
 
-const DEFAULT_BASE_URL = "https://api.valmar.dev";
-
 export class Valmar {
   private readonly apiKey: string;
   private readonly baseUrl: string;
@@ -264,7 +262,7 @@ export class Valmar {
 
   constructor(config: ValmarConfig) {
     this.apiKey = config.apiKey;
-    this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+    this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.organizationId = config.organizationId;
     this.projectId = config.projectId;
 
