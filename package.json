@@ -1,6 +1,6 @@
 {
   "name": "@valmar-ai/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript SDK for the Valmar platform",
   "license": "Apache-2.0",
   "author": "Valmar",
