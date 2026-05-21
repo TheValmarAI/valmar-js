@@ -72,7 +72,7 @@ jobs:
           npm init -y >/dev/null
           npm install "$GITHUB_WORKSPACE/$TARBALL" >/dev/null
           node --input-type=module - <<'JS'
-          import { Valmar } from "@valmar/sdk";
+          import { Valmar } from "@valmar-ai/sdk";
           const client = new Valmar({
             apiKey: "valmr_proj_sk_test",
             baseUrl: "https://api.example.test",
@@ -85,4 +85,6 @@ jobs:
           JS
 
       - name: Publish to npm
-        run: npm publish --tag "${{ inputs.npm_tag }}"
+        run: npm publish --tag "${{ inputs.npm_tag }}" --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

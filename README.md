@@ -1,4 +1,4 @@
-# @valmar/sdk
+# @valmar-ai/sdk
 
 TypeScript SDK for the Valmar platform.
 
@@ -11,13 +11,13 @@ License: Apache-2.0
 ## Installation
 
 ```bash
-bun add @valmar/sdk
+bun add @valmar-ai/sdk
 ```
 
 ## Quick start
 
 ```ts
-import { Valmar } from "@valmar/sdk";
+import { Valmar } from "@valmar-ai/sdk";
 
 const valmar = new Valmar({
   apiKey: "valmr_proj_sk_...",
@@ -81,7 +81,7 @@ const result = await valmar.people.importBulk({
 ## Error handling
 
 ```ts
-import { Valmar, ValmarApiError } from "@valmar/sdk";
+import { Valmar, ValmarApiError } from "@valmar-ai/sdk";
 
 try {
   await valmar.knowledge.search({ query: "test" });
